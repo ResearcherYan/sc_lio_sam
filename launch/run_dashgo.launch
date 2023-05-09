@@ -1,0 +1,25 @@
+<launch>
+
+  <arg name="project" default="sc_lio_sam"/>
+
+  <env name="ROSCONSOLE_CONFIG_FILE" value="$(find sc_lio_sam)/launch/rosconsole_error.conf"/>
+
+  <!-- Parameters -->
+  <rosparam file="$(find sc_lio_sam)/config/params_dashgo.yaml" command="load" />
+
+  <!-- Mapping -->
+  <node pkg="$(arg project)" type="$(arg project)_imuPreintegration"   name="$(arg project)_imuPreintegration"    output="screen" 	respawn="true"/>
+  <node pkg="$(arg project)" type="$(arg project)_imageProjection"     name="$(arg project)_imageProjection"      output="screen"     respawn="true"/>
+  <node pkg="$(arg project)" type="$(arg project)_featureExtraction"   name="$(arg project)_featureExtraction"    output="screen"     respawn="true"/>
+  <node pkg="$(arg project)" type="$(arg project)_mapOptmization"      name="$(arg project)_mapOptmization"       output="screen"     respawn="true"/>
+
+  <!-- Robot State TF -->
+  <param name="robot_description" command="$(find xacro)/xacro $(find sc_lio_sam)/launch/robot.urdf.xacro --inorder" />
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="true">
+    <!-- <param name="tf_prefix" value="$(env ROS_HOSTNAME)"/> -->
+  </node>
+
+  <!-- Run Rviz -->
+  <node pkg="rviz" type="rviz" name="$(arg project)_rviz" args="-d $(find sc_lio_sam)/launch/rviz_dashgo.rviz" />
+
+</launch>
