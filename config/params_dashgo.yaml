@@ -25,6 +25,7 @@ sc_lio_sam:
   lidarMaxRange: 1000.0 # default: 1000.0, maximum lidar range to be used
 
   # IMU Settings
+  imuHz: 300                                  # IMU frequency
   imuAccNoise: 3.6225352484975402e-02
   imuGyrNoise: 2.1908348958778684e-03
   imuAccBiasN: 4.2833363074887498e-04

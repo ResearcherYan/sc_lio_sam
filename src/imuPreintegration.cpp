@@ -19,7 +19,7 @@ using gtsam::symbol_shorthand::B; // Bias  (ax,ay,az,gx,gy,gz)
 using gtsam::symbol_shorthand::V; // Vel   (xdot,ydot,zdot)
 using gtsam::symbol_shorthand::X; // Pose3 (x,y,z,r,p,y)
 
-class TransformFusion: public ParamServer
+class TransformFusion : public ParamServer
 {
 public:
   std::mutex mtx;
@@ -181,7 +181,7 @@ public:
   }
 };
 
-class IMUPreintegration: public ParamServer
+class IMUPreintegration : public ParamServer
 {
 public:
   std::mutex mtx;
@@ -398,8 +398,7 @@ public:
       double imuTime = ROS_TIME(thisImu);
       if (imuTime < currentCorrectionTime - delta_t)
       {
-        double dt = (lastImuT_opt < 0 || (imuTime - lastImuT_opt) <= 0) ? (1.0 / 500) : (imuTime - lastImuT_opt);
-        // double dt = (lastImuT_opt < 0) ? (1.0 / 500.0) : (imuTime - lastImuT_opt); // 相邻两条 imu 数据之间的时间
+        double dt = (lastImuT_opt < 0 || (imuTime - lastImuT_opt) <= 0) ? (1.0 / imuHz) : (imuTime - lastImuT_opt); // 相邻两条 imu 数据之间的时间
         imuIntegratorOpt_->integrateMeasurement(
           gtsam::Vector3(thisImu->linear_acceleration.x, thisImu->linear_acceleration.y, thisImu->linear_acceleration.z),
           gtsam::Vector3(thisImu->angular_velocity.x, thisImu->angular_velocity.y, thisImu->angular_velocity.z), dt);
@@ -469,7 +468,7 @@ public:
       {
         sensor_msgs::Imu* thisImu = &imuQueImu[i];
         double imuTime = ROS_TIME(thisImu);
-        double dt = (lastImuQT < 0) ? (1.0 / 500.0) : (imuTime - lastImuQT);
+        double dt = (lastImuQT < 0 || imuTime - lastImuQT <= 0) ? (1.0 / imuHz) : (imuTime - lastImuQT);
 
         imuIntegratorImu_->integrateMeasurement(gtsam::Vector3(thisImu->linear_acceleration.x, thisImu->linear_acceleration.y, thisImu->linear_acceleration.z),
           gtsam::Vector3(thisImu->angular_velocity.x, thisImu->angular_velocity.y, thisImu->angular_velocity.z), dt);
@@ -520,7 +519,7 @@ public:
       return;
 
     double imuTime = ROS_TIME(&thisImu);
-    double dt = (lastImuT_imu < 0) ? (1.0 / 500.0) : (imuTime - lastImuT_imu);
+    double dt = (lastImuT_imu < 0 || imuTime - lastImuT_imu <= 0) ? (1.0 / imuHz) : (imuTime - lastImuT_imu);
     lastImuT_imu = imuTime;
 
     // integrate this single imu message
