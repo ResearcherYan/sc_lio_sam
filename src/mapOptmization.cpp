@@ -48,7 +48,7 @@ void saveOptimizedVerticesKITTIformat(gtsam::Values _estimates, std::string _fil
   }
 }
 
-class mapOptimization: public ParamServer
+class mapOptimization : public ParamServer
 {
 
 public:
@@ -517,16 +517,16 @@ public:
     downSizeFilterSC.filter(*laserCloudRawDS);
 
     // dense cloud
-    pcl::PointCloud<PointType>::Ptr frontDenseCloud; // 前方 180° 的点
-    frontDenseCloud.reset(new pcl::PointCloud<PointType>());
+    // pcl::PointCloud<PointType>::Ptr frontDenseCloud; // 前方 180° 的点
+    // frontDenseCloud.reset(new pcl::PointCloud<PointType>());
 
-    for (int rowIdx = 0; rowIdx < N_SCAN; rowIdx++)
-      for (int colIdx = Horizon_SCAN / 4, iter = 0; iter < Horizon_SCAN / 2; iter++, colIdx = (colIdx + 1) % Horizon_SCAN)
-        if (laserCloudDense->points[colIdx + rowIdx * Horizon_SCAN].intensity != -1)
-          frontDenseCloud->push_back(laserCloudDense->points[colIdx + rowIdx * Horizon_SCAN]);
+    // for (int rowIdx = 0; rowIdx < N_SCAN; rowIdx++)
+    //   for (int colIdx = Horizon_SCAN / 4, iter = 0; iter < Horizon_SCAN / 2; iter++, colIdx = (colIdx + 1) % Horizon_SCAN)
+    //     if (laserCloudDense->points[colIdx + rowIdx * Horizon_SCAN].intensity != -1)
+    //       frontDenseCloud->push_back(laserCloudDense->points[colIdx + rowIdx * Horizon_SCAN]);
 
     laserCloudDenseDS->clear();
-    downSizeFilterDense.setInputCloud(frontDenseCloud);
+    downSizeFilterDense.setInputCloud(laserCloudDense);
     downSizeFilterDense.filter(*laserCloudDenseDS);
 
     // Downsample cloud from current scan

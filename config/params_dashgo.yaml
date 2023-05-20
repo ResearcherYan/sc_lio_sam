@@ -14,7 +14,9 @@ sc_lio_sam:
 
   # Export settings
   saveMap: true
-  mapDirectory: "/home/yan/data/playground/map2/" # use global path, and end with "/"
+  #mapDirectory: "/home/yan/data/c302/map/" # use global path, and end with "/"
+  mapDirectory: "/home/yan/data/playground/map1_0.5m_5m/" # use global path, and end with "/"
+  # mapDirectory: "/home/yan/data/lane/2023-5-20-11-16/" # use global path, and end with "/"
 
   # Sensor Settings
   sensor: velodyne # lidar sensor type, either 'velodyne' or 'ouster'
@@ -109,6 +111,10 @@ sc_lio_sam:
   # denseMap params
   saveDenseMap: true
   mappingDenseLeafSize: 0.05 # dense map leaf size
-  floorZ: -0.6 # meters, floor height (relative to the cooridnate origin of lidar)
-  ceilingZ: 1.0 # meters, ceiling height (relative to the cooridnate origin of lidar)
-  denseMapRange: 100.0 # meters, only use points within this range for dense map
+  localDenseMapRange: 5.0 # meters, within this range, wider Z range will be used for dense map, supposing the ground is almost flat
+  localMinZ: -0.5 # meters, minimum Z in the local aera (relative to the cooridnate origin of lidar)
+  localMaxZ: 0.5 # meters, floor height (relative to the cooridnate origin of lidar)
+  globalDenseMapRange: 100.0 # meters, within this range, less wider Z range will be used for dense map, since the ground is not strictly flat
+  globalMinZ: -0.3 # meters, ceiling height (relative to the cooridnate origin of lidar)
+  globalMaxZ: 1.0
+  

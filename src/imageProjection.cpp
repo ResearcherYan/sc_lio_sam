@@ -43,7 +43,7 @@ POINT_CLOUD_REGISTER_POINT_STRUCT(MulranPointXYZIRT,
 
 const int queueLength = 2000;
 
-class ImageProjection: public ParamServer
+class ImageProjection : public ParamServer
 {
 private:
   std::mutex imuLock;
@@ -98,7 +98,7 @@ private:
   PointType nanPoint; // fill in denseCloud at each iteration
 
 public:
-  ImageProjection(): deskewFlag(0)
+  ImageProjection() : deskewFlag(0)
   {
     subImu = nh.subscribe<sensor_msgs::Imu>(imuTopic, 2000, &ImageProjection::imuHandler, this, ros::TransportHints().tcpNoDelay());
     subOdom = nh.subscribe<nav_msgs::Odometry>(odomTopic + "_incremental", 2000, &ImageProjection::odometryHandler, this, ros::TransportHints().tcpNoDelay());
@@ -608,8 +608,13 @@ public:
       int index = columnIdn + rowIdn * Horizon_SCAN;
       fullCloud->points[index] = thisPoint;
 
-      if (thisPoint.z > floorZ && thisPoint.z < ceilingZ && range < denseMapRange)
-        denseCloud->points[index] = thisPoint;
+      if (range < globalDenseMapRange)
+      {
+        if (range < localDenseMapRange && thisPoint.z > localMinZ && thisPoint.z < localMaxZ)
+          denseCloud->points[index] = thisPoint;
+        else if (thisPoint.z > globalMinZ && thisPoint.z < globalMaxZ)
+          denseCloud->points[index] = thisPoint;
+      }
     }
   }
 

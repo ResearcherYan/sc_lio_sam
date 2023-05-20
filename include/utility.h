@@ -184,9 +184,12 @@ public:
   // denseMap params
   bool saveDenseMap;
   float mappingDenseLeafSize;
-  float floorZ;
-  float ceilingZ;
-  float denseMapRange;
+  float localDenseMapRange;
+  float localMinZ;
+  float localMaxZ;
+  float globalDenseMapRange;
+  float globalMinZ;
+  float globalMaxZ;
 
   ParamServer()
   {
@@ -285,9 +288,12 @@ public:
 
     nh.param<bool>("sc_lio_sam/saveDenseMap", saveDenseMap, true);
     nh.param<float>("sc_lio_sam/mappingDenseLeafSize", mappingDenseLeafSize, 0.01);
-    nh.param<float>("sc_lio_sam/floorZ", floorZ, -1.0);
-    nh.param<float>("sc_lio_sam/ceilingZ", ceilingZ, 3.0);
-    nh.param<float>("sc_lio_sam/denseMapRange", denseMapRange, 5.0);
+    nh.param<float>("sc_lio_sam/localDenseMapRange", localDenseMapRange, 10.0);
+    nh.param<float>("sc_lio_sam/localMinZ", localMinZ, -0.6);
+    nh.param<float>("sc_lio_sam/localMaxZ", localMaxZ, 0.6);
+    nh.param<float>("sc_lio_sam/globalDenseMapRange", globalDenseMapRange, 100.0);
+    nh.param<float>("sc_lio_sam/globalMinZ", globalMinZ, -0.1);
+    nh.param<float>("sc_lio_sam/globalMaxZ", globalMaxZ, 0.1);
 
     usleep(100);
   }
