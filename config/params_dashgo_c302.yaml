@@ -14,9 +14,8 @@ sc_lio_sam:
 
   # Export settings
   saveMap: true
-  mapDirectory: "/home/yan/data/c302/map_1/" # use global path, and end with "/"
-  # mapDirectory: "/home/yan/data/playground/map1_0.5m_5m/" # use global path, and end with "/"
-  # mapDirectory: "/home/yan/data/lane/2023-5-20-11-16/" # use global path, and end with "/"
+  # mapDirectory: "/home/yan/data/c302/map_calib_2023-5-25-15-44_cropped/" # use global path, and end with "/"
+  mapDirectory: "/home/yan/data/c302/map_test_calib/" # use global path, and end with "/"
 
   # Sensor Settings
   sensor: velodyne # lidar sensor type, either 'velodyne' or 'ouster'
@@ -44,21 +43,57 @@ sc_lio_sam:
   #                 -0.0708193, -0.99746274, -0.00726044,
   #                 -0.01765798, 0.00853122, -0.99980769]
 
-  # extrinsicTrans: [-0.15328172, -0.02238192, -0.12981084]
-  # extrinsicRot: [0.98817724, 0.15331327, -0.00088088,
-  #                 0.1533139, -0.98812011, 0.01065335,
-  #                 0.00076289, -0.01066245, -0.99994286]
-  # extrinsicRPY: [0.98817724, 0.15331327, -0.00088088,
-  #                 0.1533139, -0.98812011, 0.01065335,
-  #                 0.00076289, -0.01066245, -0.99994286]
+  extrinsicTrans: [-0.15328172, -0.02238192, -0.12981084]
+  extrinsicRot: [0.98817724, 0.15331327, -0.00088088,
+                  0.1533139, -0.98812011, 0.01065335,
+                  0.00076289, -0.01066245, -0.99994286]
+  extrinsicRPY: [0.98817724, 0.15331327, -0.00088088,
+                  0.1533139, -0.98812011, 0.01065335,
+                  0.00076289, -0.01066245, -0.99994286]
 
-  extrinsicTrans: [0.0, 0.0, 0.0]
-  extrinsicRot: [1, 0, 0,
-                  0, -1, 0,
-                  0, 0, -1]
-  extrinsicRPY: [1, 0, 0,
-                  0, -1, 0,
-                  0, 0, -1]
+  # extrinsicTrans: [0.0, 0.0, 0.0]
+  # # std
+  # extrinsicRot: [1, 0, 0,
+  #                 0, -1, 0,
+  #                 0, 0, -1]
+  # extrinsicRPY: [1, 0, 0,
+  #                 0, -1, 0,
+  #                 0, 0, -1]
+  # # yaw 2
+  # extrinsicRot: [0.99939083, 0.0348995, 0,
+  #                 0.0348995, -0.99939083, 0,
+  #                 0, 0, -1]
+  # extrinsicRPY: [0.99939083, 0.0348995, 0,
+  #                 0.0348995, -0.99939083, 0,
+  #                 0, 0, -1]
+  # # yaw5
+  # extrinsicRot: [0.9961947, 0.08715574, 0,
+  #                 0.08715574, -0.9961947, 0,
+  #                 0, 0, -1]
+  # extrinsicRPY: [0.9961947, 0.08715574, 0,
+  #                 0.08715574, -0.9961947, 0,
+  #                 0, 0, -1]
+  # # yaw 10
+  # extrinsicRot: [0.98480775, 0.17364818, 0,
+  #                 0.17364818, -0.98480775, 0,
+  #                 0, 0, -1]
+  # extrinsicRPY: [0.98480775, 0.17364818, 0,
+  #                 0.17364818, -0.98480775, 0,
+  #                 0, 0, -1]
+  # # yaw -5
+  # extrinsicRot: [0.9961947, -0.08715574, 0,
+  #                 -0.08715574, -0.9961947, 0,
+  #                 0, 0, -1]
+  # extrinsicRPY: [0.9961947, -0.08715574, 0,
+  #                 -0.08715574, -0.9961947, 0,
+  #                 0, 0, -1]
+  # # yaw 2 pitch 2
+  # extrinsicRot: [0.99878203, 0.0348995, -0.03487824,
+  #                 0.03487824, -0.99939083, -0.00121797,
+  #                 -0.0348995, 0, -0.99939083]
+  # extrinsicRPY: [0.99878203, 0.0348995, -0.03487824,
+  #                 0.03487824, -0.99939083, -0.00121797,
+  #                 -0.0348995, 0, -0.99939083]
 
   # LOAM feature threshold
   edgeThreshold: 1.0
@@ -76,7 +111,7 @@ sc_lio_sam:
   odometrySurfLeafSize: 0.1 # default: 0.4 - outdoor, 0.2 - indoor
   mappingCornerLeafSize: 0.05 # default: 0.2 - outdoor, 0.1 - indoor
   mappingSurfLeafSize: 0.1 # default: 0.4 - outdoor, 0.2 - indoor
-  mappingSCLeafSize: 0.5 # scan context leaf size
+  mappingSCLeafSize: 0.1 # scan context leaf size
   mappingICPLeafSize: 0.1 # ICP leaf size
 
   # odometrySurfLeafSize: 0.2 # default: 0.4 - outdoor, 0.2 - indoor
