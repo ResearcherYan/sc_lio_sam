@@ -14,8 +14,7 @@ sc_lio_sam:
 
   # Export settings
   saveMap: true
-  # mapDirectory: "/home/yan/data/c302/map_calib_2023-5-25-15-44_cropped/" # use global path, and end with "/"
-  mapDirectory: "/home/yan/data/c302/map_test_calib/" # use global path, and end with "/"
+  mapDirectory: "/home/yan/data/pavilion/map_2023-6-10-16-00_icp0.3_sc0.1_timeDiff30_searchRadius5/" # use global path, and end with "/"
 
   # Sensor Settings
   sensor: velodyne # lidar sensor type, either 'velodyne' or 'ouster'
@@ -52,48 +51,12 @@ sc_lio_sam:
   #                 0.00076289, -0.01066245, -0.99994286]
 
   extrinsicTrans: [0.0, 0.0, 0.0]
-  # std
   extrinsicRot: [1, 0, 0,
                   0, -1, 0,
                   0, 0, -1]
   extrinsicRPY: [1, 0, 0,
                   0, -1, 0,
                   0, 0, -1]
-  # # yaw 2
-  # extrinsicRot: [0.99939083, 0.0348995, 0,
-  #                 0.0348995, -0.99939083, 0,
-  #                 0, 0, -1]
-  # extrinsicRPY: [0.99939083, 0.0348995, 0,
-  #                 0.0348995, -0.99939083, 0,
-  #                 0, 0, -1]
-  # # yaw5
-  # extrinsicRot: [0.9961947, 0.08715574, 0,
-  #                 0.08715574, -0.9961947, 0,
-  #                 0, 0, -1]
-  # extrinsicRPY: [0.9961947, 0.08715574, 0,
-  #                 0.08715574, -0.9961947, 0,
-  #                 0, 0, -1]
-  # # yaw 10
-  # extrinsicRot: [0.98480775, 0.17364818, 0,
-  #                 0.17364818, -0.98480775, 0,
-  #                 0, 0, -1]
-  # extrinsicRPY: [0.98480775, 0.17364818, 0,
-  #                 0.17364818, -0.98480775, 0,
-  #                 0, 0, -1]
-  # # yaw -5
-  # extrinsicRot: [0.9961947, -0.08715574, 0,
-  #                 -0.08715574, -0.9961947, 0,
-  #                 0, 0, -1]
-  # extrinsicRPY: [0.9961947, -0.08715574, 0,
-  #                 -0.08715574, -0.9961947, 0,
-  #                 0, 0, -1]
-  # # yaw 2 pitch 2
-  # extrinsicRot: [0.99878203, 0.0348995, -0.03487824,
-  #                 0.03487824, -0.99939083, -0.00121797,
-  #                 -0.0348995, 0, -0.99939083]
-  # extrinsicRPY: [0.99878203, 0.0348995, -0.03487824,
-  #                 0.03487824, -0.99939083, -0.00121797,
-  #                 -0.0348995, 0, -0.99939083]
 
   # LOAM feature threshold
   edgeThreshold: 1.0
@@ -132,7 +95,7 @@ sc_lio_sam:
 
   # CPU Params
   numberOfCores: 8 # number of cores for mapping optimization
-  mappingProcessInterval: 0.15 # seconds, regulate mapping frequency
+  mappingProcessInterval: 0.05 # seconds, regulate mapping frequency
 
   # Surrounding map
   surroundingkeyframeAddingDistThreshold: 1.0 # meters, regulate keyframe adding threshold
@@ -143,9 +106,9 @@ sc_lio_sam:
   # Loop closure
   loopClosureEnableFlag: true
   loopClosureFrequency: 1.0 # Hz, regulate loop closure constraint add frequency
-  historyKeyframeSearchRadius: 15.0 # meters, key frame that is within n meters from current pose will be considerd for loop closure
+  historyKeyframeSearchRadius: 5.0 # meters, key frame that is within n meters from current pose will be considerd for loop closure
   historyKeyframeSearchTimeDiff: 30.0 # seconds, key frame that is n seconds older will be considered for loop closure
-  historyKeyframeSearchNum: 25 # number of hostory key frames will be fused into a submap for loop closure
+  historyKeyframeSearchNum: 25 # number of history key frames will be fused into a submap for loop closure
   historyKeyframeFitnessScore: 0.3 # icp threshold, the smaller the better alignment
 
   # Visualization
@@ -154,7 +117,7 @@ sc_lio_sam:
   globalMapVisualizationLeafSize: 0.2 # meters, global map visualization cloud density
 
   # Threshold for skipping current lidar frame（这些阈值需要根据实际情况测试）
-  imuVelThre: 30.0 # velocity of current lidar frame (opt 预积分器优化后的速度)
+  imuVelThre: 3.0 # velocity of current lidar frame (opt 预积分器优化后的速度)
   imuAccBiasThre: 1.0 # opt 预积分器优化后的加速度 bias
   imuGyroBiasThre: 1.0 # opt 预积分器优化后的陀螺仪 bias
 
