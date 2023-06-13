@@ -1,8 +1,8 @@
 import numpy as np
 
 roll = 180 / 180 * np.pi
-pitch = 2 / 180 * np.pi
-yaw = 2 / 180 * np.pi
+pitch = 0 / 180 * np.pi
+yaw = 0 / 180 * np.pi
 
 # roll = -3.13093
 # pitch = -0.000762887

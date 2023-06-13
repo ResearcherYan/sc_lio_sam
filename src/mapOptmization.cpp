@@ -1321,7 +1321,7 @@ public:
     {
       rate.sleep();
       performRSLoopClosure();
-      performSCLoopClosure(); // giseop
+      // performSCLoopClosure(); // giseop
       visualizeLoopClosure();
     }
   }
