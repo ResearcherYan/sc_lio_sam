@@ -1320,9 +1320,197 @@ public:
     while (ros::ok())
     {
       rate.sleep();
-      performRSLoopClosure();
+      performLoopClousure();
+      // performRSLoopClosure();
       // performSCLoopClosure(); // giseop
       visualizeLoopClosure();
+    }
+  }
+
+  void performLoopClousure()
+  {
+    if (cloudKeyPoses3D->points.empty() == true)
+      return;
+
+    if (copy_cloudKeyPoses3D->size() == keyPoseNum)
+      return;
+
+    mtx.lock();
+    *copy_cloudKeyPoses3D = *cloudKeyPoses3D;
+    copy_cloudKeyPoses2D->clear();            // giseop
+    *copy_cloudKeyPoses2D = *cloudKeyPoses3D; // giseop
+    *copy_cloudKeyPoses6D = *cloudKeyPoses6D;
+    mtx.unlock();
+
+    int loopKeyCur = copy_cloudKeyPoses3D->size() - 1;
+    keyPoseNum = copy_cloudKeyPoses3D->size();
+    pcl::PointCloud<PointType>::Ptr curKeyframeCloud(new pcl::PointCloud<PointType>());
+    pcl::PointCloud<PointType>::Ptr preKeyframeCloud(new pcl::PointCloud<PointType>());
+    loopFindNearKeyFrames(curKeyframeCloud, loopKeyCur, 0);
+    if (curKeyframeCloud->size() < 300)
+    {
+      ROS_INFO_STREAM("Source cloud feature point num: " << curKeyframeCloud->size() << " < 300). Skip this keyframe.");
+      return;
+    }
+
+    // ICP Settings
+    static pcl::IterativeClosestPoint<PointType, PointType> icp;
+    icp.setMaxCorrespondenceDistance(150); // giseop , use a value can cover 2*historyKeyframeSearchNum range in meter
+    icp.setMaximumIterations(100);
+    icp.setTransformationEpsilon(1e-6);
+    icp.setEuclideanFitnessEpsilon(1e-6);
+    icp.setRANSACIterations(0);
+    icp.setInputSource(curKeyframeCloud);
+    pcl::PointCloud<PointType>::Ptr unused_result(new pcl::PointCloud<PointType>());
+
+    // pose transformation var
+    float x, y, z, roll, pitch, yaw;
+    Eigen::Affine3f correctionLidarFrame, tWrong, tCorrect;
+    // pose graph var
+    gtsam::Pose3 poseFrom, poseTo;
+
+
+    /************** SC loop **************/
+    bool scLoopFound = false;
+    // find keys
+    auto detectResult = scManager.detectLoopClosureID(); // first: nn index, second: yaw diff
+    int loopKeyPre = detectResult.first;
+    float yawDiffRad = detectResult.second; // not use for v1 (because pcl icp withi initial somthing wrong...)
+
+    if (loopKeyPre != -1)
+    {
+      // get legitimate SC loop which satisfies the time and distance requirements
+      if (pointDistance(copy_cloudKeyPoses3D->points[loopKeyCur], copy_cloudKeyPoses3D->points[loopKeyPre]) < historyKeyframeSearchRadius &&
+        abs(copy_cloudKeyPoses6D->points[loopKeyPre].time - timeLaserInfoCur) > historyKeyframeSearchTimeDiff)
+      {
+        // extract cloud
+        loopFindNearKeyFrames(preKeyframeCloud, loopKeyPre, historyKeyframeSearchNum);
+        if (preKeyframeCloud->size() < 1000)
+        {
+          ROS_INFO_STREAM("Target cloud feature point num: " << preKeyframeCloud->size() << " < 1000. Skip SC loop (" << loopKeyCur << ", " << loopKeyPre << ").");
+        }
+        else
+        {
+          if (pubHistoryKeyFrames.getNumSubscribers() != 0)
+            publishCloud(&pubHistoryKeyFrames, preKeyframeCloud, timeLaserInfoStamp, odometryFrame);
+
+          // Align clouds
+          icp.setInputTarget(preKeyframeCloud);
+          icp.align(*unused_result);
+          if (icp.hasConverged() == false || icp.getFitnessScore() > historyKeyframeFitnessScore)
+          {
+            ROS_INFO_STREAM("ICP fitness failed. SC loop (" << loopKeyCur << ", " << loopKeyPre << ") ICP score: "
+              << icp.getFitnessScore() << " > " << historyKeyframeFitnessScore << ". Skip this SC loop.");
+          }
+          else
+          {
+            ROS_INFO_STREAM("ICP fitness passed. SC loop (" << loopKeyCur << ", " << loopKeyPre << ") ICP score: "
+              << icp.getFitnessScore() << " < " << historyKeyframeFitnessScore << ". Add this SC loop.");
+            scLoopFound = true;
+
+            // publish corrected cloud
+            if (pubIcpKeyFrames.getNumSubscribers() != 0)
+            {
+              pcl::PointCloud<PointType>::Ptr closed_cloud(new pcl::PointCloud<PointType>());
+              pcl::transformPointCloud(*curKeyframeCloud, *closed_cloud, icp.getFinalTransformation());
+              publishCloud(&pubIcpKeyFrames, closed_cloud, timeLaserInfoStamp, odometryFrame);
+            }
+
+            // Get pose transformation
+            correctionLidarFrame = icp.getFinalTransformation();
+
+            // transform from world origin to wrong pose
+            tWrong = pclPointToAffine3f(copy_cloudKeyPoses6D->points[loopKeyCur]);
+            // transform from world origin to corrected pose
+            tCorrect = correctionLidarFrame * tWrong;// pre-multiplying -> successive rotation about a fixed frame
+            pcl::getTranslationAndEulerAngles(tCorrect, x, y, z, roll, pitch, yaw);
+            poseFrom = Pose3(Rot3::RzRyRx(roll, pitch, yaw), Point3(x, y, z));
+            poseTo = pclPointTogtsamPose3(copy_cloudKeyPoses6D->points[loopKeyPre]);
+
+            gtsam::Vector Vector6(6);
+            float noiseScore = icp.getFitnessScore();
+            Vector6 << noiseScore, noiseScore, noiseScore, noiseScore, noiseScore, noiseScore;
+            noiseModel::Diagonal::shared_ptr constraintNoise = noiseModel::Diagonal::Variances(Vector6);
+
+            // Add pose constraint
+            mtx.lock();
+            loopIndexQueue.push_back(make_pair(loopKeyCur, loopKeyPre));
+            loopPoseQueue.push_back(poseFrom.between(poseTo));
+            loopNoiseQueue.push_back(constraintNoise);
+            mtx.unlock();
+
+            // add loop constriant
+            loopIndexContainer.insert(std::pair<int, int>(loopKeyCur, loopKeyPre)); // giseop for multimap
+          }
+        }
+      }
+    }
+
+    /************** RS loop **************/
+    // if no SC loop found, try to check if there is any RS loop
+    if (scLoopFound == false)
+    {
+      if (detectLoopClosureDistance(&loopKeyCur, &loopKeyPre) == false) // 通过距离和时间判断是否可能存在闭环
+        return;
+
+      // extract cloud
+      pcl::PointCloud<PointType>::Ptr preKeyframeCloud(new pcl::PointCloud<PointType>());
+      loopFindNearKeyFrames(preKeyframeCloud, loopKeyPre, historyKeyframeSearchNum);
+      if (preKeyframeCloud->size() < 1000)
+      {
+        ROS_INFO_STREAM("Target cloud feature point num: " << preKeyframeCloud->size() << " < 1000. Skip RS loop (" << loopKeyCur << ", " << loopKeyPre << ").");
+        return;
+      }
+      if (pubHistoryKeyFrames.getNumSubscribers() != 0)
+        publishCloud(&pubHistoryKeyFrames, preKeyframeCloud, timeLaserInfoStamp, odometryFrame);
+
+      // Align clouds
+      icp.setInputTarget(preKeyframeCloud);
+      icp.align(*unused_result);
+      if (icp.hasConverged() == false || icp.getFitnessScore() > historyKeyframeFitnessScore)
+      {
+        ROS_INFO_STREAM("ICP fitness failed. RS loop (" << loopKeyCur << ", " << loopKeyPre << ") ICP score: "
+          << icp.getFitnessScore() << " > " << historyKeyframeFitnessScore << ". Skip this RS loop.");
+        return;
+      }
+      else
+      {
+        ROS_INFO_STREAM("ICP fitness passed. RS loop (" << loopKeyCur << ", " << loopKeyPre << ") ICP score: "
+          << icp.getFitnessScore() << " < " << historyKeyframeFitnessScore << ". Add this RS loop.");
+      }
+
+      // publish corrected cloud
+      if (pubIcpKeyFrames.getNumSubscribers() != 0)
+      {
+        pcl::PointCloud<PointType>::Ptr closed_cloud(new pcl::PointCloud<PointType>());
+        pcl::transformPointCloud(*curKeyframeCloud, *closed_cloud, icp.getFinalTransformation());
+        publishCloud(&pubIcpKeyFrames, closed_cloud, timeLaserInfoStamp, odometryFrame);
+      }
+
+      // Get pose transformation
+      correctionLidarFrame = icp.getFinalTransformation();
+      // transform from world origin to wrong pose
+      tWrong = pclPointToAffine3f(copy_cloudKeyPoses6D->points[loopKeyCur]);
+      // transform from world origin to corrected pose
+      tCorrect = correctionLidarFrame * tWrong; // pre-multiplying -> successive rotation about a fixed frame
+      pcl::getTranslationAndEulerAngles(tCorrect, x, y, z, roll, pitch, yaw);
+      poseFrom = Pose3(Rot3::RzRyRx(roll, pitch, yaw), Point3(x, y, z));
+      poseTo = pclPointTogtsamPose3(copy_cloudKeyPoses6D->points[loopKeyPre]);
+
+      gtsam::Vector Vector6(6);
+      float noiseScore = icp.getFitnessScore();
+      Vector6 << noiseScore, noiseScore, noiseScore, noiseScore, noiseScore, noiseScore;
+      noiseModel::Diagonal::shared_ptr constraintNoise = noiseModel::Diagonal::Variances(Vector6);
+
+      // Add pose constraint
+      mtx.lock();
+      loopIndexQueue.push_back(make_pair(loopKeyCur, loopKeyPre));
+      loopPoseQueue.push_back(poseFrom.between(poseTo));
+      loopNoiseQueue.push_back(constraintNoise);
+      mtx.unlock();
+
+      // add loop constriant
+      loopIndexContainer.insert(std::pair<int, int>(loopKeyCur, loopKeyPre)); // giseop for multimap
     }
   }
 
@@ -1350,14 +1538,12 @@ public:
     // extract cloud
     pcl::PointCloud<PointType>::Ptr curKeyframeCloud(new pcl::PointCloud<PointType>());
     pcl::PointCloud<PointType>::Ptr preKeyframeCloud(new pcl::PointCloud<PointType>());
-    {
-      loopFindNearKeyFrames(curKeyframeCloud, loopKeyCur, 0);
-      loopFindNearKeyFrames(preKeyframeCloud, loopKeyPre, historyKeyframeSearchNum);
-      if (curKeyframeCloud->size() < 300 || preKeyframeCloud->size() < 1000)
-        return;
-      if (pubHistoryKeyFrames.getNumSubscribers() != 0)
-        publishCloud(&pubHistoryKeyFrames, preKeyframeCloud, timeLaserInfoStamp, odometryFrame);
-    }
+    loopFindNearKeyFrames(curKeyframeCloud, loopKeyCur, 0);
+    loopFindNearKeyFrames(preKeyframeCloud, loopKeyPre, historyKeyframeSearchNum);
+    if (curKeyframeCloud->size() < 300 || preKeyframeCloud->size() < 1000)
+      return;
+    if (pubHistoryKeyFrames.getNumSubscribers() != 0)
+      publishCloud(&pubHistoryKeyFrames, preKeyframeCloud, timeLaserInfoStamp, odometryFrame);
 
     // ICP Settings
     static pcl::IterativeClosestPoint<PointType, PointType> icp;
