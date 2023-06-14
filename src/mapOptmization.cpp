@@ -1332,15 +1332,15 @@ public:
     if (cloudKeyPoses3D->points.empty() == true)
       return;
 
-    if (copy_cloudKeyPoses3D->size() == keyPoseNum)
-      return;
-
     mtx.lock();
     *copy_cloudKeyPoses3D = *cloudKeyPoses3D;
     copy_cloudKeyPoses2D->clear();            // giseop
     *copy_cloudKeyPoses2D = *cloudKeyPoses3D; // giseop
     *copy_cloudKeyPoses6D = *cloudKeyPoses6D;
     mtx.unlock();
+
+    if (copy_cloudKeyPoses3D->size() == keyPoseNum)
+      return;
 
     int loopKeyCur = copy_cloudKeyPoses3D->size() - 1;
     keyPoseNum = copy_cloudKeyPoses3D->size();
