@@ -1454,7 +1454,6 @@ public:
         return;
 
       // extract cloud
-      pcl::PointCloud<PointType>::Ptr preKeyframeCloud(new pcl::PointCloud<PointType>());
       loopFindNearKeyFrames(preKeyframeCloud, loopKeyPre, historyKeyframeSearchNum);
       if (preKeyframeCloud->size() < 1000)
       {

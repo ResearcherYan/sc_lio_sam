@@ -1,10 +1,13 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(sc_lio_sam)
 
-set(CMAKE_BUILD_TYPE "Release")
 set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_BUILD_TYPE "Release")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -pthread") # for faster compiling (-O3 has to be specified, or the odometry will be insane)
 # set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -g -pthread")
+
+# set(CMAKE_BUILD_TYPE "Debug")
+# set(CMAKE_CXX_FLAGS_DEBUG "-O0 -Wall -g -ggdb -pthread")
 
 find_package(catkin REQUIRED COMPONENTS
   tf
